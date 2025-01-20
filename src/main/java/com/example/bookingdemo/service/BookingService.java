@@ -1,11 +1,12 @@
 package com.example.bookingdemo.service;
 
+import com.example.bookingdemo.advice.ResourceNotAvailableException;
+import com.example.bookingdemo.dto.BookingDTO;
 import com.example.bookingdemo.model.Booking;
+import com.example.bookingdemo.model.Customer;
 import com.example.bookingdemo.model.Room;
-import com.example.bookingdemo.model.User;
 import com.example.bookingdemo.repository.BookingRepository;
 import com.example.bookingdemo.repository.HotelRepository;
-import com.example.bookingdemo.repository.RoomRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -22,21 +23,43 @@ public class BookingService {
     private HotelRepository hotelRepository;
 
     @Autowired
-    private RoomRepository roomRepository;
+    private RoomService roomService;
 
-    public Booking createBooking(Long roomId, User user, LocalDate checkInDate, LocalDate checkOutDate) {
+    @Autowired
+    private CustomerService customerService;
+
+    public BookingDTO getBookingById(Long bookingID){
+        //TODO: add correct id
+        Optional<Booking> bookingOptional = bookingRepository.findById(bookingID);
+        if (bookingOptional.isEmpty()) {
+            throw new ResourceNotAvailableException("booking not found.");
+        }
+
+        return getBookingDto(bookingOptional.get());
+    }
+
+    private BookingDTO getBookingDto(Booking booking) {
+        return BookingDTO.builder()
+                .id(booking.getId())
+                .userName(booking.getCustomer().getName())
+                .hotelName(booking.getRoom().getHotel().getName())
+                .roomType(booking.getRoom().getRoomType())
+                .checkIn(booking.getCheckInDate())
+                .checkOut(booking.getCheckOutDate())
+                .isCancelled(booking.getIsCancelled())
+                .build();
+    }
+
+    public Booking createBooking(Long roomId, Long userId, LocalDate checkInDate, LocalDate checkOutDate) {
         // Validate date range
+        Customer customer = customerService.getCustomerById(userId);
+
         if (checkInDate.isAfter(checkOutDate) || checkInDate.isEqual(checkOutDate)) {
             throw new IllegalArgumentException("Check-out date must be after check-in date.");
         }
 
         // Fetch the room
-        Optional<Room> roomOptional = roomRepository.findById(roomId);
-        if (roomOptional.isEmpty()) {
-            throw new IllegalArgumentException("Room not found.");
-        }
-
-        Room room = roomOptional.get();
+        Room room = roomService.getRoomById(roomId);
 
         // Check if the room is available for the given date range
         boolean isAvailable = isRoomAvailable(roomId, checkInDate, checkOutDate);
@@ -47,7 +70,7 @@ public class BookingService {
         // Create the booking
         Booking booking = new Booking();
         booking.setRoom(room);
-        booking.setUser(user); // Assuming userId is stored in the booking
+        booking.setCustomer(customer); // Assuming userId is stored in the booking
         booking.setCheckInDate(checkInDate);
         booking.setCheckOutDate(checkOutDate);
 

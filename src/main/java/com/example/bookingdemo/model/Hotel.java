@@ -13,7 +13,8 @@ import java.util.List;
 @Entity
 public class Hotel {
 
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
     @Column(nullable = false)
