@@ -29,7 +29,6 @@ public class BookingService {
     private CustomerService customerService;
 
     public BookingDTO getBookingById(Long bookingID){
-        //TODO: add correct id
         Optional<Booking> bookingOptional = bookingRepository.findById(bookingID);
         if (bookingOptional.isEmpty()) {
             throw new ResourceNotAvailableException("booking not found.");
