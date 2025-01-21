@@ -14,6 +14,14 @@ public class CustomerService {
     @Autowired
     private CustomerRepository customerRepository;
 
+
+    /**
+     * Retrieves a customer by their ID.
+     *
+     * @param userId the ID of the customer
+     * @return the customer
+     * @throws ResourceNotAvailableException if the customer is not found
+     */
     public Customer getCustomerById(Long userId){
         Optional<Customer> userOptional = customerRepository.findById(userId);
         if (userOptional.isEmpty()) {

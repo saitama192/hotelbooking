@@ -14,6 +14,13 @@ public class RoomService {
     @Autowired
     private RoomRepository roomRepository;
 
+    /**
+     * Retrieves a room by its ID.
+     *
+     * @param roomId the ID of the room
+     * @return the room
+     * @throws ResourceNotAvailableException if the room is not found
+     */
     public Room getRoomById(Long roomId) {
     Optional<Room> roomOptional = roomRepository.findById(roomId);
         if (roomOptional.isEmpty()) {

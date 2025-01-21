@@ -14,7 +14,8 @@ import java.util.List;
 public interface HotelRepository extends JpaRepository<Hotel, Long> {
     @Query("SELECT r FROM Room r WHERE r.hotel.id = :hotelId AND NOT EXISTS (" +
             "SELECT b FROM Booking b WHERE b.room.id = r.id " +
-            "AND ((b.checkInDate < :checkOutDate AND b.checkOutDate > :checkInDate))" +
+            "AND (b.checkInDate <= :checkOutDate AND b.checkOutDate >= :checkInDate) " +
+            "AND b.isCancelled = false" +
             ")")
     List<Room> findAvailableRoomsForHotelInDateRange(@Param("hotelId") Long hotelId,
                                                      @Param("checkInDate") LocalDate checkInDate,
