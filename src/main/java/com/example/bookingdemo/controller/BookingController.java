@@ -29,8 +29,7 @@ public class BookingController {
      */
     @PostMapping("/booking")
     public ResponseEntity<BookingDTO> createBooking(@RequestParam("hotel-id") Long hotelId, @RequestParam("customer-id") Long customerId, @RequestParam("check-in") LocalDate checkInDate, @RequestParam("check-out") LocalDate checkOutDate) {
-        //TODO: Implement this method
-        //check if the date is in past
+
         if (checkInDate.isBefore(LocalDate.now()) || checkOutDate.isBefore(LocalDate.now()) || checkOutDate.isBefore(checkInDate)) {
             throw new IllegalArgumentException("invalid dates entered");
         }
