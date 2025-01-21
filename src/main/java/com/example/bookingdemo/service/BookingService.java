@@ -6,11 +6,11 @@ import com.example.bookingdemo.model.Booking;
 import com.example.bookingdemo.model.Customer;
 import com.example.bookingdemo.model.Room;
 import com.example.bookingdemo.repository.BookingRepository;
-import com.example.bookingdemo.repository.HotelRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -20,7 +20,7 @@ public class BookingService {
     private BookingRepository bookingRepository;
 
     @Autowired
-    private HotelRepository hotelRepository;
+    private HotelService hotelService;
 
     @Autowired
     private RoomService roomService;
@@ -28,6 +28,13 @@ public class BookingService {
     @Autowired
     private CustomerService customerService;
 
+    /**
+     * Retrieves a booking by its ID.
+     *
+     * @param bookingID the ID of the booking
+     * @return the booking DTO
+     * @throws ResourceNotAvailableException if the booking is not found
+     */
     public BookingDTO getBookingById(Long bookingID){
         Optional<Booking> bookingOptional = bookingRepository.findById(bookingID);
         if (bookingOptional.isEmpty()) {
@@ -49,22 +56,33 @@ public class BookingService {
                 .build();
     }
 
-    public Booking createBooking(Long roomId, Long userId, LocalDate checkInDate, LocalDate checkOutDate) {
+    /**
+     * Creates a new booking.
+     *
+     * @param hotelId the ID of the hotel
+     * @param userId the ID of the user
+     * @param checkInDate the check-in date
+     * @param checkOutDate the check-out date
+     * @return the created booking DTO
+     * @throws IllegalArgumentException if the dates are invalid
+     * @throws RuntimeException if no rooms are available for the selected dates
+     */
+    public BookingDTO createBooking(Long hotelId, Long userId, LocalDate checkInDate, LocalDate checkOutDate) {
         // Validate date range
         Customer customer = customerService.getCustomerById(userId);
 
-        if (checkInDate.isAfter(checkOutDate) || checkInDate.isEqual(checkOutDate)) {
-            throw new IllegalArgumentException("Check-out date must be after check-in date.");
+        if (checkInDate.isBefore(LocalDate.now()) || checkOutDate.isBefore(LocalDate.now()) || checkOutDate.isBefore(checkInDate)) {
+            throw new IllegalArgumentException("invalid check in and check out dates entered");
         }
 
-        // Fetch the room
-        Room room = roomService.getRoomById(roomId);
-
-        // Check if the room is available for the given date range
-        boolean isAvailable = isRoomAvailable(roomId, checkInDate, checkOutDate);
-        if (!isAvailable) {
-            throw new IllegalStateException("Room is not available for the selected dates.");
+        //fetch the rooms for Hotel
+        List<Room> rooms = hotelService.findAvailableRooms(hotelId, checkInDate, checkOutDate);
+        if(rooms.isEmpty()){
+            throw new RuntimeException("No rooms available for the selected dates.");
         }
+
+        Room room  = rooms.get(0); //get the first available room
+
 
         // Create the booking
         Booking booking = new Booking();
@@ -73,13 +91,7 @@ public class BookingService {
         booking.setCheckInDate(checkInDate);
         booking.setCheckOutDate(checkOutDate);
 
-        return bookingRepository.save(booking);
+        return getBookingDto(bookingRepository.save(booking));
     }
 
-    // Check if a room is available for the given date range
-    private boolean isRoomAvailable(Long roomId, LocalDate checkInDate, LocalDate checkOutDate) {
-        // Fetch bookings for the room where there is an overlap in the date range
-        return bookingRepository.findByRoomIdAndCheckOutDateGreaterThanEqualAndCheckInDateLessThanEqual(
-                roomId, checkInDate, checkOutDate).isEmpty();
-    }
 }
