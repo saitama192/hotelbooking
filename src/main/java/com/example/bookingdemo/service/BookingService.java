@@ -108,7 +108,16 @@ public class BookingService {
     }
 
     public List<BookingDTO> getAllBookings(Long customerId) {
-        return new ArrayList<>();
-
+        List<Booking> bookings = bookingRepository.findByUserId(customerId);
+        if(bookings.isEmpty()){
+            throw new ResourceNotAvailableException("No bookings found for the user.");
+        }
+        else{
+            List<BookingDTO> bookingDTOs = new ArrayList<>();
+            for(Booking booking: bookings){
+                bookingDTOs.add(getBookingDto(booking));
+            }
+            return bookingDTOs;
+        }
     }
 }
