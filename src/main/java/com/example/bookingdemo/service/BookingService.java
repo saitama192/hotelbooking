@@ -8,8 +8,10 @@ import com.example.bookingdemo.model.Room;
 import com.example.bookingdemo.repository.BookingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,4 +96,28 @@ public class BookingService {
         return getBookingDto(bookingRepository.save(booking));
     }
 
+    @Transactional
+    public void cancelBooking(Long bookingId) {
+            Optional<Booking> bookingOptional = bookingRepository.findById(bookingId);
+            if (bookingOptional.isEmpty()) {
+                throw new ResourceNotAvailableException("booking not found.");
+            }
+            Booking booking = bookingOptional.get();
+            booking.setIsCancelled(true);
+            bookingRepository.save(booking);
+    }
+
+    public List<BookingDTO> getAllBookings(Long customerId) {
+        List<Booking> bookings = bookingRepository.findByUserId(customerId);
+        if(bookings.isEmpty()){
+            throw new ResourceNotAvailableException("No bookings found for the user.");
+        }
+        else{
+            List<BookingDTO> bookingDTOs = new ArrayList<>();
+            for(Booking booking: bookings){
+                bookingDTOs.add(getBookingDto(booking));
+            }
+            return bookingDTOs;
+        }
+    }
 }

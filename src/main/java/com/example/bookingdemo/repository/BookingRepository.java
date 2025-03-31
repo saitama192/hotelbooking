@@ -21,4 +21,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             @Param("checkOutDate") LocalDate checkOutDate);
 
 
+    // Custom query to find bookings for a given user
+    @Query("SELECT b FROM Booking b WHERE b.customer.id = :customerId")
+    List<Booking> findByUserId(
+            @Param("customerId") Long customerId);
+
+
 }
